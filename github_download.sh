@@ -7,14 +7,16 @@ source $DIR/_download_cmds.sh
 function showOptions() {
     echo "-a,  GitHub username (author)."
     echo "-r,  Repo (project) name."
-    echo "-f,  Partial file name to look for."
+    echo "-n,  Partial file name to look for."
+    echo "-f,  Custom file name."
     echo "-o,  Output directory (default: $output_dir)."
+    echo "-s,  Github source type (default: $url_type)."
     echo "-h,  Show this help menu."
-    echo "Usage: $(basename $0) [-a <author>] [-r <repo>] [-f <File name to look for>] [-o <output directory>]"
-    echo "Example: $(basename $0) -a Acidanthera -r Lilu -o ~/Downloads"
+    echo "Usage: $(basename $0) [-s <source>] [-a <author>] [-r <repo>] [-n <File name to look for>] [-o <output directory>] [-f <Custom file name>]"
+    echo "Example: $(basename $0) -s api -a Acidanthera -r Lilu -o ~/Downloads -f Lilu"
 }
 
-while getopts a:r:f:o:h option; do
+while getopts a:r:n:f:o:s:h option; do
     case $option in
     a)
         author=$OPTARG
@@ -22,11 +24,17 @@ while getopts a:r:f:o:h option; do
     r)
         repo=$OPTARG
     ;;
-    f)
+    n)
         partial_name=$OPTARG
+    ;;
+    f)
+        file_name=$OPTARG
     ;;
     o)
         output_dir=$OPTARG
+    ;;
+    s)
+        source=$OPTARG
     ;;
     h)
         showOptions
@@ -38,7 +46,10 @@ done
 shift $((OPTIND-1))
 
 if [[ -n "$author" && -n "$repo" ]]; then
-    githubDownload "$author" "$repo" "$output_dir" "$partial_name"
+    if [[ -n "$source" && "$source" == "api" ]]; then
+        githubAPIDownload "$author" "$repo" "$output_dir" "$partial_name" "$file_name"
+    else
+        githubDownload "$author" "$repo" "$output_dir" "$partial_name" "$file_name"
 else
     showOptions
     exit 1

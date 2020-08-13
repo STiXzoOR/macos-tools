@@ -3,6 +3,7 @@
 tools_dir=$(dirname ${BASH_SOURCE[0]})
 repo_dir=$(dirname $0)
 
+source $tools_dir/_system_cmds.sh
 source $tools_dir/_download_cmds.sh
 source $tools_dir/_install_cmds.sh
 source $tools_dir/_archive_cmds.sh
@@ -15,7 +16,7 @@ hotpatch_dir=$repo_dir/Hotpatch/Downloads
 local_kexts_dir=$repo_dir/Kexts
 build_dir=$repo_dir/Build
 
-tools_config=$tools_dir/org.the-braveknight.config.plist
+tools_config=$tools_dir/org.stixzoor.config.plist
 
 if [[ -z "$repo_plist" ]]; then
     if [[ -e "$repo_dir/repo_config.plist" ]]; then
@@ -61,10 +62,16 @@ function installToolWithName() {
 
 function installEssentialKextWithName() {
 # $1: Kext name
+# $2: Output directory (optional)
     if [[ ! -d "$efi" ]]; then efi=$($tools_dir/mount_efi.sh); fi
-    kext=$(findKext "$1" "$downloads_dir" "$local_kexts_dir")
+    if [[ -n "$2" ]]; then 
+        local output_dir=$2 
+    else 
+        local output_dir=$efi/EFI/OC/kexts 
+    fi
+    kext=$(findKext "$2" "$downloads_dir" "$local_kexts_dir")
     if [[ -e "$kext" ]]; then
-        installKext "$kext" "$efi/EFI/CLOVER/kexts/Other"
+        installKext "$kext" "$output_dir"
     fi
 }
 
@@ -79,7 +86,8 @@ case "$1" in
             repo=$(printValue "Downloads:Bitbucket:$index:Repo" "$repo_plist")
             if [[ $? -ne 0 ]]; then break; fi
             name=$(printValue "Downloads:Bitbucket:$index:Name" "$repo_plist" 2> /dev/null)
-            bitbucketDownload "$author" "$repo" "$downloads_dir" "$name"
+            file_name=$(printValue "Downloads:Bitbucket:$index:Filename" "$repo_plist" 2> /dev/null)
+            bitbucketDownload "$author" "$repo" "$downloads_dir" "$name" "$file_name"
         done
 
         # GitHub downloads
@@ -87,8 +95,15 @@ case "$1" in
             author=$(printValue "Downloads:GitHub:$index:Author" "$repo_plist")
             repo=$(printValue "Downloads:GitHub:$index:Repo" "$repo_plist")
             if [[ $? -ne 0 ]]; then break; fi
+            source=$(printValue "Downloads:GitHub:$index:Source" "$repo_plist" 2> /dev/null)
             name=$(printValue "Downloads:GitHub:$index:Name" "$repo_plist" 2> /dev/null)
-            githubDownload "$author" "$repo" "$downloads_dir" "$name"
+            file_name=$(printValue "Downloads:GitHub:$index:Filename" "$repo_plist" 2> /dev/null)
+
+            if [[ "$source" == "api" ]]; then
+                githubAPIDownload "$author" "$repo" "$downloads_dir" "$name" "$file_name"
+            else
+                githubDownload "$author" "$repo" "$downloads_dir" "$name" "$file_name"
+            fi
         done
 
         # Hotpatch SSDT downloads
@@ -179,7 +194,14 @@ case "$1" in
     --install-essential-kexts)
         unarchiveAllInDirectory "$downloads_dir"
         EFI=$($tools_dir/mount_efi.sh)
-        efi_kexts_dest=$EFI/EFI/CLOVER/kexts/Other
+        bootloader=$(printValue "Bootloader" "$repo_plist" 2> /dev/null)
+
+        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+            efi_kexts_dest=$EFI/EFI/$bootloader/kexts/Other
+        else
+            efi_kexts_dest=$EFI/EFI/OC/kexts
+        fi
+        
         rm -Rf $efi_kexts_dest/*.kext
 
         # GitHub kexts
@@ -191,7 +213,7 @@ case "$1" in
                 if [[ $? -ne 0 ]]; then break; fi
                 essential=$(printValue "Downloads:GitHub:$downloadIndex:Installations:Kexts:$installIndex:Essential" "$repo_plist" 2> /dev/null)
                 if [[ "$essential" == "true" ]]; then
-                    installEssentialKextWithName "$name"
+                    installEssentialKextWithName "$name" "$efi_kexts_dest"
                 fi
             done
         done
@@ -205,7 +227,7 @@ case "$1" in
                 if [[ $? -ne 0 ]]; then break; fi
                 essential=$(printValue "Downloads:Bitbucket:$downloadIndex:Installations:Kexts:$installIndex:Essential" "$repo_plist" 2> /dev/null)
                 if [[ "$essential" == "true" ]]; then
-                    installEssentialKextWithName "$name"
+                    installEssentialKextWithName "$name" "$efi_kexts_dest"
                 fi
             done
         done
@@ -216,7 +238,7 @@ case "$1" in
             if [[ $? -ne 0 ]]; then break; fi
             essential=$(printValue "Local Installations:Kexts:$index:Essential" "$repo_plist" 2> /dev/null)
             if [[ "$essential" == "true" ]]; then
-                installEssentialKextWithName "$name"
+                installEssentialKextWithName "$name" "$efi_kexts_dest"
             fi
         done
     ;;
@@ -236,7 +258,7 @@ case "$1" in
         done
     ;;
     --remove-deprecated-kexts)
-        # To override default list of deprecated kexts in macos-tools/org.the-braveknight.deprecated.plist, set 'Deprecated:Override Defaults' to 'true'.
+        # To override default list of deprecated kexts in macos-tools/org.stixzoor.deprecated.plist, set 'Deprecated:Override Defaults' to 'true'.
         override=$(printValue "Deprecated:Override Defaults" "$repo_plist" 2> /dev/null)
         if [[ "$override" != "true" ]]; then
             for kext in $(printArrayItems "Deprecated:Kexts" "$tools_config" 2> /dev/null); do
@@ -248,10 +270,10 @@ case "$1" in
         done
     ;;
     --install-config)
-        installConfig "$config_plist"
+        installConfig "$bootloader" "$config_plist"
     ;;
     --update-config)
-        updateConfig "$config_plist"
+        updateConfig "$bootloader" "$config_plist"
     ;;
     --update-kernelcache)
         sudo kextcache -i /
@@ -260,6 +282,12 @@ case "$1" in
         if [[ ! -d "$build_dir" ]]; then mkdir $build_dir; fi
         createLiluHelper "$build_dir"
         installKext "$build_dir/LiluHelper.kext"
+    ;;
+    --mount-system)
+        mountSystem
+    ;;
+    --install-mount-system-helper)
+        installMountSystemHelper
     ;;
     --update)
         echo "Checking for updates..."
