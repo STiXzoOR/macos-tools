@@ -2,7 +2,7 @@
 
 output_dir=~/Downloads
 
-hotpatch_repo="https://github.com/dortania/Getting-Started-With-ACPI/raw/master/extra-files/compiled"
+hotpatch_repo="https://github.com/RehabMan/OS-X-Clover-Laptop-Config/raw/master/hotpatch"
 
 function downloadSSDT() {
 # $1: SSDT name
@@ -21,8 +21,8 @@ function downloadAllHotpatchSSDTs() {
         local output_dir="$1"
     fi
     rm -Rf /tmp/Hotpatch.git
-    git clone https://github.com/dortania/Getting-Started-With-ACPI /tmp/Hotpatch.git -q 2> /dev/null
-    cp /tmp/Hotpatch.git/extra-files/compiled/*.aml "$output_dir"
+    git clone https://github.com/RehabMan/OS-X-Clover-Laptop-Config /tmp/Hotpatch.git -q 2> /dev/null
+    cp /tmp/Hotpatch.git/hotpatch/*.dsl "$output_dir"
 }
 
 function bitbucketDownload() {
