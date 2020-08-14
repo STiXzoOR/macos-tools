@@ -5,7 +5,7 @@ os_version="$(sw_vers -productVersion | cut -c1-5)"
 helper_plist=org.stixzoor.MountSystem.plist
 
 function mountSystem() {
-    if [[ "${os_version}" >= "10.15" ]]; then
+    if [[ "$os_version" > "10.14" ]]; then
         echo "Mounting system root for Read/Write"
 
         sudo mount -uw /
@@ -17,7 +17,7 @@ function mountSystem() {
 }
 
 function installMountSystemHelper() {
-    if [[ "${os_version}" >= "10.15" ]]; then
+    if [[ "$os_version" > "10.14" ]]; then
         echo "Installing MountSystem helper tool"
 
         sudo cp -f "$DIR/$helper_plist" /Library/LaunchDaemons/
