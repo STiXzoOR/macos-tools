@@ -8,7 +8,7 @@ function updateConfig() {
 # $1: EFI bootloader type (default: OC)
 # $2: New config.plist
     if [[ -n "$1" ]]; then
-        local bootloader="$1"
+        local bootloader=$1
     else
         local bootloader="OC"
     fi
@@ -29,7 +29,7 @@ function installConfig() {
 # $1: EFI bootloader type (default: OC)
 # $1: New config.plist
     if [[ -n "$1" ]]; then
-        local bootloader="$1"
+        local bootloader=$1
     else
         local bootloader="OC"
     fi

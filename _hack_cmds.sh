@@ -119,7 +119,7 @@ case "$1" in
             fi
         done
 
-        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+        if [[ "$bootloader" == "CLOVER" ]]; then
             # Hotpatch SSDT downloads
             downloadAllHotpatchSSDTs "$hotpatch_dir"
         fi
@@ -175,7 +175,7 @@ case "$1" in
         done
     ;;
     --install-kexts)
-        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+        if [[ "$bootloader" == "CLOVER" ]]; then
             unarchiveAllInDirectory "$downloads_dir"
 
             # GitHub kexts
@@ -211,11 +211,10 @@ case "$1" in
     --install-essential-kexts)
         unarchiveAllInDirectory "$downloads_dir"
         EFI=$($tools_dir/mount_efi.sh)
+        efi_kexts_dest="$EFI/EFI/$bootloader/kexts"
 
-        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
-            efi_kexts_dest=$EFI/EFI/$bootloader/kexts/Other
-        else
-            efi_kexts_dest=$EFI/EFI/OC/kexts
+        if [[ "$bootloader" == "CLOVER" ]]; then
+            efi_kexts_dest+="/Other"
         fi
 
         # GitHub kexts
@@ -258,17 +257,16 @@ case "$1" in
     ;;
     --remove-installed-essential-kexts)
         EFI=$($tools_dir/mount_efi.sh)
+        efi_kexts_dest="$EFI/EFI/$bootloader/kexts"
 
-        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
-            efi_kexts_dest=$EFI/EFI/$bootloader/kexts/Other
-        else
-            efi_kexts_dest=$EFI/EFI/OC/kexts
+        if [[ "$bootloader" == "CLOVER" ]]; then
+            efi_kexts_dest+="/Other"
         fi
         
         rm -Rf $efi_kexts_dest/*.kext
     ;;
     --remove-installed-kexts)
-        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+        if [[ "$bootloader" == "CLOVER" ]]; then
             for kext in $(printInstalledItems "Kexts"); do
                 removeKext "$kext"
             done
@@ -285,7 +283,7 @@ case "$1" in
         done
     ;;
     --remove-deprecated-kexts)
-        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+        if [[ "$bootloader" == "CLOVER" ]]; then
             # To override default list of deprecated kexts in macos-tools/org.stixzoor.deprecated.plist, set 'Deprecated:Override Defaults' to 'true'.
             override=$(printValue "Deprecated:Override Defaults" "$repo_plist" 2> /dev/null)
             if [[ "$override" != "true" ]]; then
@@ -308,7 +306,7 @@ case "$1" in
         sudo kextcache -i /
     ;;
     --install-lilu-helper)
-        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+        if [[ "$bootloader" == "CLOVER" ]]; then
             if [[ ! -d "$build_dir" ]]; then mkdir $build_dir; fi
             createLiluHelper "$build_dir"
             installKext "$build_dir/LiluHelper.kext"
