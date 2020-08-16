@@ -21,6 +21,7 @@ tools_config=$tools_dir/org.stixzoor.config.plist
 if [[ -z "$repo_plist" ]]; then
     if [[ -e "$repo_dir/repo_config.plist" ]]; then
         repo_plist=$repo_dir/repo_config.plist
+        bootloader=$(printValue "Bootloader" "$repo_plist" 2> /dev/null)
     else
         echo "No repo_config.plist file found. Exiting..."
         exit 1
@@ -106,8 +107,10 @@ case "$1" in
             fi
         done
 
-        # Hotpatch SSDT downloads
-        downloadAllHotpatchSSDTs "$hotpatch_dir"
+        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+            # Hotpatch SSDT downloads
+            downloadAllHotpatchSSDTs "$hotpatch_dir"
+        fi
     ;;
     --install-apps)
         unarchiveAllInDirectory "$downloads_dir"
@@ -160,41 +163,42 @@ case "$1" in
         done
     ;;
     --install-kexts)
-        unarchiveAllInDirectory "$downloads_dir"
+        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+            unarchiveAllInDirectory "$downloads_dir"
 
-        # GitHub kexts
-        for ((downloadIndex=0; 1; downloadIndex++)); do
-            download=$(printValue "Downloads:GitHub:$downloadIndex" "$repo_plist" 2> /dev/null)
-            if [[ $? -ne 0 ]]; then break; fi
-            for ((installIndex=0; 1; installIndex++)); do
-                name=$(printValue "Downloads:GitHub:$downloadIndex:Installations:Kexts:$installIndex:Name" "$repo_plist" 2> /dev/null)
+            # GitHub kexts
+            for ((downloadIndex=0; 1; downloadIndex++)); do
+                download=$(printValue "Downloads:GitHub:$downloadIndex" "$repo_plist" 2> /dev/null)
                 if [[ $? -ne 0 ]]; then break; fi
-                installKextWithName "$name"
-            done
-        done
-
-        # Bitbucket kexts
-        for ((downloadIndex=0; 1; downloadIndex++)); do
-            download=$(printValue "Downloads:Bitbucket:$downloadIndex" "$repo_plist" 2> /dev/null)
-            if [[ $? -ne 0 ]]; then break; fi
                 for ((installIndex=0; 1; installIndex++)); do
-                name=$(printValue "Downloads:Bitbucket:$downloadIndex:Installations:Kexts:$installIndex:Name" "$repo_plist" 2> /dev/null)
+                    name=$(printValue "Downloads:GitHub:$downloadIndex:Installations:Kexts:$installIndex:Name" "$repo_plist" 2> /dev/null)
+                    if [[ $? -ne 0 ]]; then break; fi
+                    installKextWithName "$name"
+                done
+            done
+
+            # Bitbucket kexts
+            for ((downloadIndex=0; 1; downloadIndex++)); do
+                download=$(printValue "Downloads:Bitbucket:$downloadIndex" "$repo_plist" 2> /dev/null)
+                if [[ $? -ne 0 ]]; then break; fi
+                    for ((installIndex=0; 1; installIndex++)); do
+                    name=$(printValue "Downloads:Bitbucket:$downloadIndex:Installations:Kexts:$installIndex:Name" "$repo_plist" 2> /dev/null)
+                    if [[ $? -ne 0 ]]; then break; fi
+                    installKextWithName "$name"
+                done
+            done
+
+            # Local kexts
+            for ((index=0; 1; index++)); do
+                name=$(printValue "Local Installations:Kexts:$index:Name" "$repo_plist" 2> /dev/null)
                 if [[ $? -ne 0 ]]; then break; fi
                 installKextWithName "$name"
             done
-        done
-
-        # Local kexts
-        for ((index=0; 1; index++)); do
-            name=$(printValue "Local Installations:Kexts:$index:Name" "$repo_plist" 2> /dev/null)
-            if [[ $? -ne 0 ]]; then break; fi
-            installKextWithName "$name"
-        done
+        fi
     ;;
     --install-essential-kexts)
         unarchiveAllInDirectory "$downloads_dir"
         EFI=$($tools_dir/mount_efi.sh)
-        bootloader=$(printValue "Bootloader" "$repo_plist" 2> /dev/null)
 
         if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
             efi_kexts_dest=$EFI/EFI/$bootloader/kexts/Other
@@ -243,9 +247,11 @@ case "$1" in
         done
     ;;
     --remove-installed-kexts)
-        for kext in $(printInstalledItems "Kexts"); do
-            removeKext "$kext"
-        done
+        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+            for kext in $(printInstalledItems "Kexts"); do
+                removeKext "$kext"
+            done
+        fi
     ;;
     --remove-installed-apps)
         for app in $(printInstalledItems "Apps"); do
@@ -258,16 +264,18 @@ case "$1" in
         done
     ;;
     --remove-deprecated-kexts)
-        # To override default list of deprecated kexts in macos-tools/org.stixzoor.deprecated.plist, set 'Deprecated:Override Defaults' to 'true'.
-        override=$(printValue "Deprecated:Override Defaults" "$repo_plist" 2> /dev/null)
-        if [[ "$override" != "true" ]]; then
-            for kext in $(printArrayItems "Deprecated:Kexts" "$tools_config" 2> /dev/null); do
+        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+            # To override default list of deprecated kexts in macos-tools/org.stixzoor.deprecated.plist, set 'Deprecated:Override Defaults' to 'true'.
+            override=$(printValue "Deprecated:Override Defaults" "$repo_plist" 2> /dev/null)
+            if [[ "$override" != "true" ]]; then
+                for kext in $(printArrayItems "Deprecated:Kexts" "$tools_config" 2> /dev/null); do
+                    removeKext "$kext"
+                done
+            fi
+            for kext in $(printArrayItems "Deprecated:Kexts" "$repo_plist" 2> /dev/null); do
                 removeKext "$kext"
             done
         fi
-        for kext in $(printArrayItems "Deprecated:Kexts" "$repo_plist" 2> /dev/null); do
-            removeKext "$kext"
-        done
     ;;
     --install-config)
         installConfig "$bootloader" "$config_plist"
@@ -279,9 +287,11 @@ case "$1" in
         sudo kextcache -i /
     ;;
     --install-lilu-helper)
-        if [[ ! -d "$build_dir" ]]; then mkdir $build_dir; fi
-        createLiluHelper "$build_dir"
-        installKext "$build_dir/LiluHelper.kext"
+        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+            if [[ ! -d "$build_dir" ]]; then mkdir $build_dir; fi
+            createLiluHelper "$build_dir"
+            installKext "$build_dir/LiluHelper.kext"
+        fi
     ;;
     --mount-system)
         mountSystem
