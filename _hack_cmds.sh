@@ -39,7 +39,7 @@ fi
 if [[ -z "$bootloader" ]]; then
     bootloader=$(printValue "Bootloader" "$repo_plist" 2> /dev/null)
     if [[ -n "$bootloader" ]]; then
-        if [[ "$bootloader" != "OC" || "$bootloader" != "CLOVER" ]]; then
+        if [[ "$bootloader" != "OC" && "$bootloader" != "CLOVER" ]]; then
             echo "Bootloader value in repo_config.plist must either OC or CLOVER. Exiting..."
             exit 4
         fi
