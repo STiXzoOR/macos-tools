@@ -205,8 +205,6 @@ case "$1" in
         else
             efi_kexts_dest=$EFI/EFI/OC/kexts
         fi
-        
-        rm -Rf $efi_kexts_dest/*.kext
 
         # GitHub kexts
         for ((downloadIndex=0; 1; downloadIndex++)); do
@@ -245,6 +243,17 @@ case "$1" in
                 installEssentialKextWithName "$name" "$efi_kexts_dest"
             fi
         done
+    ;;
+    --remove-installed-essential-kexts)
+        EFI=$($tools_dir/mount_efi.sh)
+
+        if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
+            efi_kexts_dest=$EFI/EFI/$bootloader/kexts/Other
+        else
+            efi_kexts_dest=$EFI/EFI/OC/kexts
+        fi
+        
+        rm -Rf $efi_kexts_dest/*.kext
     ;;
     --remove-installed-kexts)
         if [[ -n "$bootloader" && "$bootloader" == "CLOVER" ]]; then
@@ -309,6 +318,7 @@ case "$1" in
         $0 --install-tools
         $0 --install-apps
         $0 --remove-deprecated-kexts
+        $0 --remove-installed-essential-kexts
         $0 --install-essential-kexts
         $0 --install-kexts
         $0 --install-lilu-helper
