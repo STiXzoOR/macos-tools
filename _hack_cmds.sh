@@ -21,7 +21,6 @@ tools_config=$tools_dir/org.stixzoor.config.plist
 if [[ -z "$repo_plist" ]]; then
     if [[ -e "$repo_dir/repo_config.plist" ]]; then
         repo_plist=$repo_dir/repo_config.plist
-        bootloader=$(printValue "Bootloader" "$repo_plist" 2> /dev/null)
     else
         echo "No repo_config.plist file found. Exiting..."
         exit 1
@@ -34,6 +33,19 @@ if [[ -z "$config_plist" ]]; then
     else
         echo "No config.plist file found. Exiting..."
         exit 2
+    fi
+fi
+
+if [[ -z "$bootloader" ]]; then
+    bootloader=$(printValue "Bootloader" "$repo_plist" 2> /dev/null)
+    if [[ -n "$bootloader" ]]; then
+        if [[ "$bootloader" != "OC" || "$bootloader" != "CLOVER" ]]; then
+            echo "Bootloader value in repo_config.plist must either OC or CLOVER. Exiting..."
+            exit 4
+        fi
+    else
+        echo "Bootloader value in repo_config.plist cannot be empty. Exiting..."
+        exit 3
     fi
 fi
 
