@@ -82,7 +82,7 @@ function installEssentialKextWithName() {
     else 
         local output_dir=$efi/EFI/OC/kexts 
     fi
-    kext=$(findKext "$2" "$downloads_dir" "$local_kexts_dir")
+    kext=$(findKext "$1" "$downloads_dir" "$local_kexts_dir")
     if [[ -e "$kext" ]]; then
         installKext "$kext" "$output_dir"
     fi
