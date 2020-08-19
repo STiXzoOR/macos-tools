@@ -303,7 +303,9 @@ case "$1" in
         updateConfig "$bootloader" "$config_plist"
     ;;
     --update-kernelcache)
-        sudo kextcache -i /
+        if [[ "$bootloader" == "CLOVER" ]]; then
+            sudo kextcache -i /
+        fi
     ;;
     --install-lilu-helper)
         if [[ "$bootloader" == "CLOVER" ]]; then
