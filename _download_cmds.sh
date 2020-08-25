@@ -112,7 +112,7 @@ function githubAPIDownload() {
     fi
 
     if [[ ! -f "/tmp/org.$1.$2.download.txt" || $(find "/tmp/org.$1.$2.download.txt" -mtime +1 -print) ]]; then
-        local pages=$(grep -o -m 1 '[/|&]page=.>; rel="last"' "/tmp/org.$1.$2.headers.txt" | grep -o -m 1 "[0-9]")
+        local pages=$(grep -o -m 1 '[/|&]page=.*>; rel="last"' "/tmp/org.$1.$2.headers.txt" | sed -E 's/.*&page=([^&]+)>; rel="last"/\1/')
         for (( page=1; page<=$pages; page+=1 )); do
             curl -s "https://api.github.com/repos/$1/$2/releases?page=$page&per_page=100"
         done >"/tmp/org.$1.$2.download.txt"
