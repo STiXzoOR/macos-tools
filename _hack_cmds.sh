@@ -12,6 +12,7 @@ source $tools_dir/_hda_cmds.sh
 source $tools_dir/_lilu_helper.sh
 
 downloads_dir=$repo_dir/Downloads
+oc_dir=$downloads_dir/Opencore_Files
 hotpatch_dir=$repo_dir/Hotpatch/Downloads
 local_kexts_dir=$repo_dir/Kexts
 build_dir=$repo_dir/Build
@@ -89,6 +90,15 @@ function installEssentialKextWithName() {
 }
 
 case "$1" in
+--download-opencore)
+    [[ ! -d "$downloads_dir" ]] && mkdir -p $downloads_dir
+    rm -Rf $oc_dir
+
+    githubDownload "acidanthera" "OpenCorePkg" "$downloads_dir"
+    unarchive "$downloads_dir/acidanthera-OpenCorePkg.zip"
+    mv "$downloads_dir/acidanthera-OpenCorePkg/X64/EFI" "$oc_dir"
+    rm -Rf "$downloads_dir/acidanthera-OpenCorePkg"
+    ;;
 --download-requirements)
     rm -Rf $downloads_dir && mkdir -p $downloads_dir
     rm -Rf $hotpatch_dir && mkdir -p $hotpatch_dir
@@ -122,6 +132,73 @@ case "$1" in
     if [[ "$bootloader" == "CLOVER" ]]; then
         # Hotpatch SSDT downloads
         downloadAllHotpatchSSDTs "$hotpatch_dir"
+    fi
+    ;;
+--install-opencore)
+    if [[ "$bootloader" == "OC" ]]; then
+        EFI=$($tools_dir/mount_efi.sh)
+        if [[ -d "$EFI/EFI/OC" ]]; then
+            echo -e "Looks like OpenCore is already installed on the system. if you need to update it, run:\n"
+            echo "$(basename $0) --update-opencore"
+            exit 1
+        elif [[ ! -d "$oc_dir" ]]; then
+            echo -e "Looks like OpenCore is not downloaded on the system. Please download OpenCore first.\n"
+            echo "Usage: $(basename $0) --download-opencore"
+            exit 2
+        fi
+
+        rsync -a --include 'OC/Drivers/OpenRuntime.efi' --include 'OC/Drivers/OpenHfsPlus.efi' --include 'OC/Tools/OpenShell.efi' --include 'OC/Tools/CleanNvram.efi' --exclude 'OC/Resources' --exclude 'OC/Drivers/*' --exclude 'OC/Tools/*' "$oc_dir/" "$EFI/EFI"
+    fi
+    ;;
+--update-opencore)
+    if [[ "$bootloader" == "OC" ]]; then
+        EFI=$($tools_dir/mount_efi.sh)
+
+        if [[ ! -d "$EFI/EFI/OC" ]]; then
+            echo -e "Looks like OpenCore is not found on the system. Please install OpenCore first.\n"
+            echo "Usage: $(basename $0) --install-opencore"
+            exit 1
+        elif [[ ! -d "$oc_dir" ]]; then
+            echo -e "Looks like OpenCore is not downloaded on the system. Please download OpenCore first.\n"
+            echo "Usage: $(basename $0) --download-opencore"
+            exit 2
+        fi
+
+        if [[ -e "$EFI/EFI/OC/OpenCore.efi" ]]; then
+            echo "Updating OpenCore.efi..."
+            cp "$oc_dir/OC/OpenCore.efi" "$EFI/EFI/OC/OpenCore.efi"
+        fi
+
+        if [[ -e "$EFI/EFI/BOOT/BOOTx64.efi" ]]; then
+            echo "Verifying BOOTx64.efi..."
+            cat "$EFI/EFI/BOOT/BOOTx64.efi" | grep -i OpenCore 2>&1 >/dev/null
+            if [[ "$?" == "0" ]]; then
+                echo " - Belongs to OpenCore - updating..."
+                cp "$oc_dir/BOOT/BOOTx64.efi" "$EFI/EFI/BOOT/BOOTx64.efi"
+            else
+                echo " - Does not belong to OpenCore - skipping..."
+            fi
+        fi
+
+        if [[ -d "$EFI/EFI/OC/Drivers" ]]; then
+            echo "Updating efi drivers..."
+            ls "$EFI/EFI/OC/Drivers" | while read f; do
+                if [[ -e "$oc_dir/OC/Drivers/$f" ]]; then
+                    echo " - Found $f, replacing..."
+                    cp "$oc_dir/OC/Drivers/$f" "$EFI/EFI/OC/Drivers/$f"
+                fi
+            done
+        fi
+
+        if [[ -d "$EFI/EFI/OC/Tools" ]]; then
+            echo "Updating efi tools..."
+            ls "$EFI/EFI/OC/Tools" | while read f; do
+                if [[ -e "$oc_dir/OC/Tools/$f" ]]; then
+                    echo " - Found $f, replacing..."
+                    cp "$oc_dir/OC/Tools/$f" "$EFI/EFI/OC/Tools/$f"
+                fi
+            done
+        fi
     fi
     ;;
 --install-apps)
