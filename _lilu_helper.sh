@@ -14,7 +14,7 @@ function kextsWithLiluDependency() {
     kexts=$(find $kexts_directory -name "*.kext" -not -name "LiluHelper.kext")
     for kext in $kexts; do
         local kext_plist=$kext/Contents/Info.plist
-        printValue "OSBundleLibraries:as.vit9696.Lilu" "$kext_plist" > /dev/null
+        printValue "OSBundleLibraries:as.vit9696.Lilu" "$kext_plist" >/dev/null
         if [[ $? -eq 0 ]]; then
             echo $kext
         fi
@@ -22,7 +22,7 @@ function kextsWithLiluDependency() {
 }
 
 function createLiluHelper() {
-# $1: Output directory
+    # $1: Output directory
     if [[ -d "$1" ]]; then
         local output_dir="$1"
     fi

@@ -15,23 +15,23 @@ function showOptions() {
 
 while getopts e:s:d:h option; do
     case $option in
-        e)
-            exceptions=$OPTARG
+    e)
+        exceptions=$OPTARG
         ;;
-        s)
-            tools_dest=$OPTARG
+    s)
+        tools_dest=$OPTARG
         ;;
-        d)
-            directory=$OPTARG
+    d)
+        directory=$OPTARG
         ;;
-        h)
-            showOptions
-            exit 0
+    h)
+        showOptions
+        exit 0
         ;;
     esac
 done
 
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 if [[ -d "$directory" ]]; then
     installToolsInDirectory "$directory" "$tools_dest" "$exceptions"

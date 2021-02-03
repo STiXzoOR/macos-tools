@@ -14,20 +14,20 @@ function showOptions() {
 
 while getopts mih option; do
     case $option in
-        i)
-            install=1
+    i)
+        install=1
         ;;
-        m)
-            mount=1
+    m)
+        mount=1
         ;;
-        h)
-            showOptions
-            exit 0
+    h)
+        showOptions
+        exit 0
         ;;
     esac
 done
 
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 if [[ -n "$mount" ]]; then
     mountSystem

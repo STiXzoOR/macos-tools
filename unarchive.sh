@@ -13,17 +13,17 @@ function showOptions() {
 
 while getopts d:h option; do
     case $option in
-        d)
-            directory=$OPTARG
+    d)
+        directory=$OPTARG
         ;;
-        h)
-            showOptions
-            exit 0
+    h)
+        showOptions
+        exit 0
         ;;
     esac
 done
 
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 if [[ -d "$directory" ]]; then
     unarchiveAllInDirectory "$directory"

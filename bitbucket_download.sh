@@ -19,27 +19,27 @@ while getopts a:r:n:f:o:h option; do
     case $option in
     a)
         author=$OPTARG
-    ;;
+        ;;
     r)
         repo=$OPTARG
-    ;;
+        ;;
     n)
         partial_name=$OPTARG
-    ;;
+        ;;
     f)
         file_name=$OPTARG
-    ;;
+        ;;
     o)
         output_dir=$OPTARG
-    ;;
+        ;;
     h)
         showOptions
         exit 0
-    ;;
+        ;;
     esac
 done
 
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 if [[ -n "$author" && -n "$repo" ]]; then
     bitbucketDownload "$author" "$repo" "$output_dir" "$partial_name" "$file_name"

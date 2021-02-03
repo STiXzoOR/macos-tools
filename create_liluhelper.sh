@@ -18,17 +18,17 @@ while getopts d:o:h option; do
     case $option in
     d)
         kexts_directory=$OPTARG
-    ;;
+        ;;
     o)
         output_dir=$OPTARG
-    ;;
+        ;;
     h)
         showOptions
         exit 0
-    ;;
+        ;;
     esac
 done
 
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 createLiluHelper "$output_dir"

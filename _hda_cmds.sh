@@ -10,17 +10,17 @@ native_hda=/System/Library/Extensions/AppleHDA.kext
 native_hcd=$native_hda/Contents/PlugIns/AppleHDAHardwareConfigDriver.kext
 
 function fixVersion() {
-# $1: Version property key
-# $2: Plist file
+    # $1: Version property key
+    # $2: Plist file
     oldValue=$(printValue "$1" $2)
     newValue=$(echo $oldValue | perl -p -e 's/(\d*\.\d*(\.\d*)?)/9\1/')
     setValue "$1" "$newValue" $2
 }
 
 function createHDAInjector() {
-# $1: Codec name
-# $2: Resources folder
-# $3: Output directory
+    # $1: Codec name
+    # $2: Resources folder
+    # $3: Output directory
     if [[ -d "$3" ]]; then
         local output_dir="$3"
     fi
@@ -35,13 +35,13 @@ function createHDAInjector() {
     fixVersion ":CFBundleShortVersionString" $hda_injector/Contents/Info.plist
 
     for layout in $2/layout*.plist; do
-        $DIR/zlib deflate $layout > $hda_injector/Contents/Resources/$(basename $layout .plist).xml.zlib
+        $DIR/zlib deflate $layout >$hda_injector/Contents/Resources/$(basename $layout .plist).xml.zlib
     done
 
-    $DIR/zlib inflate $native_hda/Contents/Resources/Platforms.xml.zlib > /tmp/Platforms.plist
+    $DIR/zlib inflate $native_hda/Contents/Resources/Platforms.xml.zlib >/tmp/Platforms.plist
     delete "PathMaps" /tmp/Platforms.plist
     mergePlist "$2/Platforms.plist" ":" /tmp/Platforms.plist
-    $DIR/zlib deflate /tmp/Platforms.plist > $hda_injector/Contents/Resources/Platforms.xml.zlib
+    $DIR/zlib deflate /tmp/Platforms.plist >$hda_injector/Contents/Resources/Platforms.xml.zlib
 
     addDictionary "HardwareConfigDriver_Temp" $hda_injector/Contents/Info.plist
     mergePlist "$native_hcd/Contents/Info.plist" "HardwareConfigDriver_Temp" $hda_injector/Contents/Info.plist

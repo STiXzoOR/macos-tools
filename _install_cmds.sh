@@ -11,26 +11,26 @@ apps_dest=/Applications
 if [[ ! -d $tools_dest ]]; then sudo mkdir $tools_dest; fi
 
 function findKext() {
-# $1: Kext
-# $2: Directory
+    # $1: Kext
+    # $2: Directory
     find "${@:2}" -name "$1" -not -path \*/PlugIns/* -not -path \*/Debug/*
 }
 
 function findTool() {
-# $1: Tool
-# $2: Directory
+    # $1: Tool
+    # $2: Directory
     find "${@:2}" -name "$1" -type f -perm -u+x -not -path \*.kext/* -not -path \*.app/* -not -path \*/Debug/*
 }
 
 function findApp() {
-# $1: App
-# $2: Directory
+    # $1: App
+    # $2: Directory
     find "${@:2}" -name "$1"
 }
 
 function checkExceptions() {
-# $1: Item (kext, tool, app, etc)
-# $2: Exceptions string
+    # $1: Item (kext, tool, app, etc)
+    # $2: Exceptions string
     itemName=$(basename "$1")
     if [[ -z "$2" || $(echo "$itemName" | grep -vE "$2") ]]; then
         # Passed through exceptions
@@ -42,8 +42,8 @@ function checkExceptions() {
 }
 
 function installKext() {
-# $1: Kext to install
-# $2: Destination (default: /Library/Extensions)
+    # $1: Kext to install
+    # $2: Destination (default: /Library/Extensions)
     if [[ -d "$2" ]]; then local kexts_dest="$2"; fi
     kextName=$(basename $1)
     echo Installing $kextName to $kexts_dest
@@ -53,9 +53,9 @@ function installKext() {
 }
 
 function installKextsInDirectory() {
-# $1: Directory
-# $2: Destination (optional)
-# $3: Exceptions string (optional)
+    # $1: Directory
+    # $2: Destination (optional)
+    # $3: Exceptions string (optional)
     if [[ -d "$2" ]]; then
         local kexts_dest="$2"
         if [[ -n "$3" ]]; then
@@ -74,8 +74,8 @@ function installKextsInDirectory() {
 }
 
 function installTool() {
-# $1: Tool to install
-# $2: Destination (default: /usr/local/bin)
+    # $1: Tool to install
+    # $2: Destination (default: /usr/local/bin)
     if [[ -d "$2" ]]; then local tools_dest="$2"; fi
     fileName=$(basename $1)
     echo Installing $fileName to $tools_dest
@@ -85,9 +85,9 @@ function installTool() {
 }
 
 function installToolsInDirectory() {
-# $1: Directory
-# $2: Destination (optional)
-# $3: Exceptions string (optional)
+    # $1: Directory
+    # $2: Destination (optional)
+    # $3: Exceptions string (optional)
     if [[ -d "$2" ]]; then
         local tools_dest="$2"
         if [[ -n "$3" ]]; then
@@ -106,8 +106,8 @@ function installToolsInDirectory() {
 }
 
 function installApp() {
-# $1: App to install
-# $2: Destination (default: /Applications)
+    # $1: App to install
+    # $2: Destination (default: /Applications)
     if [[ -d "$2" ]]; then local apps_dest="$2"; fi
     appName=$(basename $1)
     echo Installing $appName to $apps_dest
@@ -117,9 +117,9 @@ function installApp() {
 }
 
 function installAppsInDirectory() {
-# $1: Directory
-# $2: Destination (optional)
-# $3: Exceptions string (optional)
+    # $1: Directory
+    # $2: Destination (optional)
+    # $3: Exceptions string (optional)
     if [[ -d "$2" ]]; then
         local tools_dest="$2"
         if [[ -n "$3" ]]; then
@@ -138,19 +138,19 @@ function installAppsInDirectory() {
 }
 
 function removeKext() {
-# $1: Kext name
+    # $1: Kext name
     sudo rm -Rf "$kexts_dest/$1"
     removeInstalledItem "Kexts" "$1"
 }
 
 function removeApp() {
-# $1: App name
+    # $1: App name
     sudo rm -Rf "$apps_dest/$1"
     removeInstalledItem "Apps" "$1"
 }
 
 function removeTool() {
-# $1: Tool name
+    # $1: Tool name
     sudo rm -Rf "$tools_dest/$1"
     removeInstalledItem "Tools" "$1"
 }

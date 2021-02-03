@@ -20,8 +20,8 @@ fi
 # check if target volume is a logical Volume instead of physical
 if [[ "$(echo $(LC_ALL=C diskutil list | grep -i 'Logical Volume' | awk '{print tolower($0)}'))" == *"logical volume"* ]]; then
     # ok, we have a logical volume somewhere.. so that can assume that we can use "diskutil cs"
-    LC_ALL=C diskutil cs info $DiskDevice > /dev/null 2>&1
-    if [[ $? -eq 0 ]] ; then
+    LC_ALL=C diskutil cs info $DiskDevice >/dev/null 2>&1
+    if [[ $? -eq 0 ]]; then
         # logical volumes does not have an EFI partition (or not suitable for us?)
         # find the partition uuid
         UUID=$(LC_ALL=C diskutil info "${DiskDevice}" 2>/dev/null | sed -n 's/.*artition UUID: *//p')
@@ -56,14 +56,14 @@ fi
 
 # Find the associated EFI partition on DiskDevice
 diskutil list -plist "/dev/$DiskDevice" 2>/dev/null >/tmp/org_rehabman_diskutil.plist
-for ((part=0; 1; part++)); do
-    content=`/usr/libexec/PlistBuddy -c "Print :AllDisksAndPartitions:0:Partitions:$part:Content" /tmp/org_rehabman_diskutil.plist 2>&1`
+for ((part = 0; 1; part++)); do
+    content=$(/usr/libexec/PlistBuddy -c "Print :AllDisksAndPartitions:0:Partitions:$part:Content" /tmp/org_rehabman_diskutil.plist 2>&1)
     if [[ "$content" == *"Does Not Exist"* ]]; then
         echo "Error: cannot locate EFI partition for $DestVolume"
         exit 1
     fi
     if [[ "$content" == "EFI" ]]; then
-        EFIDevice=`/usr/libexec/PlistBuddy -c "Print :AllDisksAndPartitions:0:Partitions:$part:DeviceIdentifier" /tmp/org_rehabman_diskutil.plist 2>&1`
+        EFIDevice=$(/usr/libexec/PlistBuddy -c "Print :AllDisksAndPartitions:0:Partitions:$part:DeviceIdentifier" /tmp/org_rehabman_diskutil.plist 2>&1)
         break
     fi
 done

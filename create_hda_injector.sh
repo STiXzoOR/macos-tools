@@ -14,18 +14,18 @@ function showOptions() {
 
 while getopts c:r:o:h option; do
     case $option in
-        c)
+    c)
         codec=$OPTARG
         ;;
-        r)
+    r)
         resources=$OPTARG
         ;;
-        o)
+    o)
         output_dir=$OPTARG
         ;;
-        h)
-            showOptions
-            exit 0
+    h)
+        showOptions
+        exit 0
         ;;
     esac
 done

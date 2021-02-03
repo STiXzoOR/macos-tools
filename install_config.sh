@@ -14,20 +14,20 @@ function showOptions() {
 
 while getopts b:uh option; do
     case $option in
-        b)
-            bootloader=$OPTARG
+    b)
+        bootloader=$OPTARG
         ;;
-        u)
-            update=1
+    u)
+        update=1
         ;;
-        h)
-            showOptions
-            exit 0
+    h)
+        showOptions
+        exit 0
         ;;
     esac
 done
 
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 if [[ -e "$1" ]]; then
     if [[ -n "$update" ]]; then

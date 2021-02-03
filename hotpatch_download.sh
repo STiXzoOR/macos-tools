@@ -14,20 +14,20 @@ function showOptions() {
 
 while getopts ao:h option; do
     case $option in
-        a)
-            all=1
+    a)
+        all=1
         ;;
-        o)
-            output_dir=$OPTARG
+    o)
+        output_dir=$OPTARG
         ;;
-        h)
-            showOptions
-            exit 0
+    h)
+        showOptions
+        exit 0
         ;;
     esac
 done
 
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 if [[ "$all" ]]; then
     downloadAllHotpatchSSDTs "$output_dir"
