@@ -17,16 +17,18 @@ function mountSystem() {
 }
 
 function installMountSystemHelper() {
-    if [[ "$os_version" > "10.14" ]]; then
-        echo "Installing MountSystem helper tool"
+    if [[ "$os_version" -ge "10.15" && "$os_version" -lt "11" ]]; then
+        echo -n "Installing MountSystem helper tool... "
 
         sudo cp -f "$DIR/$helper_plist" /Library/LaunchDaemons/
-        sudo chmod 644 /Library/LaunchDaemons/$helper
-        sudo chown root:wheel /Library/LaunchDaemons/$helper
+        sudo chmod 644 /Library/LaunchDaemons/$helper_plist
+        sudo chown root:wheel /Library/LaunchDaemons/$helper_plist
 
-        sudo launchctl load /Library/LaunchDaemons/$helper
+        sudo launchctl load /Library/LaunchDaemons/$helper_plist
+
+        echo "Done."
     else
-        echo "This is only for use on macOS 10.15 and greater"
+        echo -e "\n- ERROR: This is only for use on macOS 10.15 and greater"
         exit 1
     fi
 }
