@@ -6,15 +6,8 @@ helper_plist=org.stixzoor.MountSystem.plist
 
 function mountSystem() {
     if [[ "$os_version" -ge "11" ]]; then
-        sys_vol=""
         mount_dir=~/livemount
-        for i in $(diskutil list | grep -E "[ ]+[0-9]+:.*disk[0-9]+" | sed 's/.*\(disk.*\)/\1/'); do
-            mount_point=$(diskutil info $i | grep -i "Mount Point:" | awk '{ $1=""; $2=""; print }' | sed 's/^[ \t]*//;s/[ \t]*$//')
-            if [[ "$mount_point" == "/" ]]; then
-                sys_vol=$i
-                break
-            fi
-        done
+        sys_vol=$(diskutil apfs list | grep -i "(System)" | awk '{ print $6 }')
 
         if [[ "$sys_vol" == "" ]]; then
             echo -e "\n - ERROR: Couldn't found the system volume. Please verify that your system is working properly."
