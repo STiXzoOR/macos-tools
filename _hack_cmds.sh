@@ -122,7 +122,9 @@ case "$1" in
         name=$(printValue "Downloads:GitHub:$index:Name" "$repo_plist" 2>/dev/null)
         file_name=$(printValue "Downloads:GitHub:$index:Filename" "$repo_plist" 2>/dev/null)
 
-        if [[ "$source" == "api" ]]; then
+        if [[ "$source" == "config" ]]; then
+            dortaniaBuildsDownload "$author" "$repo" "$name" "$downloads_dir" "$file_name"
+        elif [[ "$source" == "api" ]]; then
             githubAPIDownload "$author" "$repo" "$downloads_dir" "$name" "$file_name"
         else
             githubDownload "$author" "$repo" "$downloads_dir" "$name" "$file_name"
